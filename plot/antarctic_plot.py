@@ -13,8 +13,6 @@ from varglas.data.data_factory import DataFactory
 from varglas.utilities import DataInput
 from fenics import *
 from matplotlib import colors
-import pickle
-from matplotlib.colors import LinearSegmentedColormap
 import custom_cmaps
 
 # Use Latex labels

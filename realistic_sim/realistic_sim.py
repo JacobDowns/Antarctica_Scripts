@@ -1,10 +1,10 @@
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
-import varglas.model              as model
 from varglas.data.data_factory    import DataFactory
 from varglas.helper               import default_nonlin_solver_params
 from varglas.utilities            import DataInput
 from fenics                       import *
+import varglas.model              as model
 
 # Output directory
 out_dir = 'results/'
@@ -23,27 +23,32 @@ dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
 db2 = DataInput(bedmap2,  mesh=mesh)
 
-#db2.data['B'] = db2.data['S'] - db2.data['H']
-#db2.set_data_val('H', 32767, thklim)
-#db2.data['S'] = db2.data['B'] + db2.data['H']
-
 H      = db2.get_nearest_expression("H")
 S      = db2.get_nearest_expression("S")
 B      = db2.get_nearest_expression("B")
-M      = db2.get_nearest_expression("mask")
 T_s    = db1.get_nearest_expression("srfTemp")
 q_geo  = db1.get_nearest_expression("q_geo")
 adot   = db1.get_nearest_expression("adot")
-U_ob   = dm.get_projection("U_ob", near=True)
-u      = dm.get_nearest_expression("vx")
-v      = dm.get_nearest_expression("vy")
 
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B,deform=True)
 model.set_parameters(pc.IceParameters())
-model.calculate_boundaries(adot = adot)
+model.calculate_boundaries()
 model.initialize_variables()
+
+# Load in the velocity data
+#u = Function(model.Q)
+#v = Function(model.Q)
+#w = Function(model.Q)
+
+File("velocity_data/u.xml") >> u
+File("velocity_data/v.xml") >> v
+File("velocity_data/w.xml") >> w
+
+plot(u, interactive = True)
+
+quit()
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
@@ -106,7 +111,7 @@ config = { 'mode'                         : 'steady',
            },  
            'age' : 
            { 
-             'on'                  : True,
+             'on'                  : False,
              'use_smb_for_ela'     : True,
              'ela'                 : 750,
            },

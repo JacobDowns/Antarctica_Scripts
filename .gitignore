@@ -1,0 +1,11 @@
+*.pyc
+*.xml
+*.pvd
+*.vtu
+*.pvtu
+*.v
+*.p
+*.cpt
+*.msh
+*.geo
+*.png

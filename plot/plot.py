@@ -9,11 +9,7 @@ from fenics                       import *
 bedmap2 = DataFactory.get_bedmap2(thklim = 200)
 
 data = bedmap2['mask']['map_data'][::-1]
-imshow(data)
-show()
 
-print(bedmap2)
-#print(bedmap2)
 db2 = DataInput(bedmap2)
 
 x0 = -376234
@@ -47,6 +43,9 @@ lon1, lat1 = (-151.11913845599102, -84.38752263197189)
 lon2, lat2 = (32.57932373223234, -88.02904611869094)
 lon3, lat3 = (2.0840591368348487, -87.75539881594261)"""
 
+
+lon4 = 66.46
+lat4 = 64.31
 
 lons = [lon0, lon1, lon2, lon3]
 lats = [lat0, lat1, lat2, lat3]
