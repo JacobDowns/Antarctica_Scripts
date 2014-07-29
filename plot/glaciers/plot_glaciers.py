@@ -5,55 +5,63 @@ Created on Mon Jul 28 16:12:36 2014
 @author: jake
 """
 
-""" Script that takes in lat,lon gps coordinates and returns the x,y coordinates."""
 from pylab import *
-from mpl_toolkits.basemap import Basemap
 from varglas.data.data_factory import DataFactory
 from varglas.utilities import DataInput, MeshGenerator
 from numpy import *
 
-
 # Get the Antarctica data sets
 bedmap2 = DataFactory.get_bedmap2(thklim = 200)
 
+# Create a countour of the continent - without the ice shelves
 db2 = DataInput(bedmap2)
 db2.set_data_val('mask',1,127)
-
 mg = MeshGenerator(db2, 'mesh', '')
-mg.create_contour('mask', 0, skip_pts=25)
+mg.create_contour('mask', 0, skip_pts=4)
 mg.eliminate_intersections(dist=40)
-cxs = mg.longest_cont[:,0]
-cys = mg.longest_cont[:,1]
-
-
-#print(m.longest_cont)
-#m.plot_contour()
-
-
-# Create the basemap plot
-proj   = 'stere'
-lat_0  = '-90'
-lat_ts = '-71'
-lon_0  = '0'
-    
-width = 3333500*2
-height = 3333500*2
-
-"""m = Basemap(width=width, height=height, resolution='h',
-projection="stere", lat_ts=lat_ts, lon_0=lon_0, lat_0=lat_0)"""
+# Get the longest contour, which will be the coastline 
+cont = mg.longest_cont
 
 # Load the glacier data
 glacier_data = loadtxt('glacier_data.out', delimiter = '|', dtype = 'str')
+names = array(glacier_data[:,0], dtype = 'str')
 lons = array(glacier_data[:,1], dtype = 'f')
 lats = array(glacier_data[:,2], dtype = 'f')
 
 # Convert lons and lats to x, y coordinates
 x, y = db2.p(lons,lats)
 
-plot(cxs,cys,'bo-',ms = 1)
-plot(x,y,'ro',ms = 2)
-show()
+# Next, eliminate glaciers that are too far from the coast
 
-#m.drawcoastlines(linewidth=0.25, color = 'black') 
-#m.scatter(x, y, 3, marker='o', color='r')
-#show()
+# (x,y) coordinates of outlet glaciers for plotting
+x_out = []
+y_out = []
+
+# The names, and (lon, lat) coordinates of the outlet glaciers, which we'll save
+names_out = []
+lon_out = []
+lat_out = []
+
+for i in range(len(x)) :
+  v = [x[i], y[i]]
+  # Compute distance from all points in the countour : not very efficient, but
+  # oh well
+  min_dist = array(map(lambda x : linalg.norm(v - x), cont)).min()
+  
+  if min_dist < 2500 :
+    x_out.append(x[i])
+    y_out.append(y[i])
+    
+    names_out.append(names[i])
+    lon_out.append(lons[i])
+    lat_out.append(lats[i])
+
+print(len(names_out))
+
+# Save the outlet glacier data
+outlet_data = array(zip(names_out, lon_out, lat_out))
+savetxt('outlet_glaciers.out', outlet_data, delimiter = '|',  fmt="%s")
+
+# Plot the outlet glaciers
+plot(x_out,y_out,'ro',ms = 5)
+show()

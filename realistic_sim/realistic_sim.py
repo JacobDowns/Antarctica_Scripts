@@ -1,6 +1,7 @@
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
 from varglas.data.data_factory    import DataFactory
+from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.helper               import default_nonlin_solver_params
 from varglas.utilities            import DataInput
 from fenics                       import *
@@ -30,25 +31,40 @@ T_s    = db1.get_nearest_expression("srfTemp")
 q_geo  = db1.get_nearest_expression("q_geo")
 adot   = db1.get_nearest_expression("adot")
 
+# The full Antarctic mesh
+full_mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
+# Full Antarctic function space
+QF = FunctionSpace(full_mesh, 'CG', 1)
+# Load in the velocity data
+u = Function(QF)
+v = Function(QF)
+w = Function(QF)
+File("velocity_data/u.xml") >> u
+File("velocity_data/v.xml") >> v
+File("velocity_data/w.xml") >> w
+
+# Create some expressions from the velocity functions
+class UExpression(Expression):
+  def eval(self, values, x):
+    values[0] = u(x)
+    
+class VExpression(Expression):
+  def eval(self, values, x):
+    values[0] = v(x)
+    
+class WExpression(Expression):
+  def eval(self, values, x):
+    values[0] = u(x)
+
+#plot(w, interactive = True)
+quit()
+
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B,deform=True)
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries()
 model.initialize_variables()
-
-# Load in the velocity data
-#u = Function(model.Q)
-#v = Function(model.Q)
-#w = Function(model.Q)
-
-File("velocity_data/u.xml") >> u
-File("velocity_data/v.xml") >> v
-File("velocity_data/w.xml") >> w
-
-plot(u, interactive = True)
-
-quit()
 
 # specifify non-linear solver parameters :
 nonlin_solver_params = default_nonlin_solver_params()
