@@ -47,7 +47,7 @@ def f(x) :
   return m*(x - x3) + y3
 
 # Compute two new points to define the bottom edge of the domain
-x4 =-250000
+x4 =-210000
 y4 = f(x4)
 
 dif_x = x3 - x4
@@ -57,7 +57,7 @@ x5 = x2 - dif_x
 y5 = y2 - dif_y
 
 out = array([[x4,y4],[x5,y5],[x2,y2],[x3,y3]])
-savetxt('domain_coordinates.out',out)
+savetxt('domain_coordinates1.out',out)
 
 # Get the (lon, lat) coordinates for the two new points
 lon4, lat4 = db2.p(x4,y4,inverse = True)

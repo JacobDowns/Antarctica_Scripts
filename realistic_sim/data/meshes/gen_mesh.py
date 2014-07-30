@@ -12,7 +12,7 @@ bm2 = DataFactory.get_bedmap2(thklm)
 bedmap2 = DataInput(bm2)
 
 # Load the domain coordinates
-domain_coordinates = loadtxt('../domain_coordinates.out')
+domain_coordinates = loadtxt('domain_coordinates1.out')
 
 mesh_name = 'ant_mesh'
 
@@ -26,7 +26,7 @@ m.set_contour(domain_coordinates)
 m.write_gmsh_contour(100000, boundary_extend = False)
 # Extrude the flat mesh 10,000 meters in the z dimension. The height of the 
 # mesh can be automatically scaled to the proper height by the model object
-m.extrude(10000, 10)
+m.extrude(10000, 14)
 # We're finished with the flat mesh!
 m.close_file()
 
@@ -35,7 +35,7 @@ m.close_file()
 #=======================================================
 ref_bm = MeshRefiner(bedmap2, 'H', gmsh_file_name = mesh_name) 
 # Refine the mesh based on the refinement radius
-a, aid = ref_bm.add_static_attractor(2)
+a, aid = ref_bm.add_static_attractor(1.5)
 ref_bm.set_background_field(aid)
 # Write out the file
 ref_bm.finish(gui=False, out_file_name = mesh_name)

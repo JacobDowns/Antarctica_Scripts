@@ -1,20 +1,19 @@
-""" Run a simulation on the Antarctic domain with realistic surface and bed
-elevation. """
+""" Run a simulation on the rectangular Antarctic domain using bedmap2 for
+surface and bed elevation. """
 
 import varglas.solvers            as solvers
 import varglas.physical_constants as pc
 from varglas.data.data_factory    import DataFactory
-from varglas.mesh.mesh_factory    import MeshFactory
 from varglas.helper               import default_nonlin_solver_params
 from varglas.utilities            import DataInput
 from fenics                       import *
 import varglas.model              as model
 
 # Output directory
-out_dir = 'results_dir3/'
+out_dir = 'results/'
 
-#set_log_active(True)
-parameters["allow_extrapolation"] = True
+set_log_active(True)
+#parameters["allow_extrapolation"] = True
 
 mesh = Mesh('data/meshes/ant_mesh.xml')
 
@@ -39,64 +38,18 @@ T_s    = db1.get_spline_expression("srfTemp")
 q_geo  = db1.get_spline_expression("q_geo")
 adot   = db1.get_spline_expression("adot")
 
-# Create a model for the sole purpose of deforming the full continent mesh
-# Get the full continent mesh
-full_mesh = MeshFactory.get_antarctica_3D_gradS_detailed()
-mesh_model = model.Model()
-mesh_model.set_mesh(full_mesh)
-mesh_model.set_geometry(S, B, deform=True)
-
-# Project the velocity fields onto the deformed, full continent mesh
-# Load in the velocity data
-u = Function(mesh_model.Q)
-v = Function(mesh_model.Q)
-w = Function(mesh_model.Q)
-File("data/u.xml") >> u
-File("data/v.xml") >> v
-File("data/w.xml") >> w
-
-# Use Evan's beta2 field too
-#beta = Function(mesh_model.Q)
-#File("data/beta2.xml") >> beta
-
-# Create some expressions from the velocity functions
-class UExpression(Expression):
-  def eval(self, values, x):
-    values[0] = u(x)
-    
-class VExpression(Expression):
-  def eval(self, values, x):
-    values[0] = v(x)
-    
-class WExpression(Expression):
-  def eval(self, values, x):
-    values[0] = w(x)
-
 # Setup the model
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B, deform=True)
 
-# Output the two meshes for comparison
-print("Writing meshes")
-File(out_dir + "full_mesh.pvd") << mesh_model.mesh
-File(out_dir + "part_mesh.pvd") << model.mesh
-
-# Apparently the smb is only used in the transient solver with free-surface  
-# so adot isn't projected onto the mesh otherwise by the steady solver.
-# In order to view adot in paraview, I'll just output it manually
-adot_out = project(adot,model.Q)
-File(out_dir + '/adot.pvd') << adot_out
-
-print("Doing some stuff")
-u_out = project(UExpression(),model.Q)
-v_out = project(VExpression(),model.Q)
-w_out = project(WExpression(),model.Q)
-File('data/u_out.xml') << u_out
-File('data/v_out.xml') << v_out
-File('data/w_out.xml') << w_out
-
-quit()
+# Load the velocities for the boundaries
+u = Function(model.Q)
+v = Function(model.Q)
+w = Function(model.Q)
+File("data/boundary_velocity/u_bound.xml") >> u
+File("data/boundary_velocity/v_bound.xml") >> v
+File("data/boundary_velocity/w_bound.xml") >> w
 
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(adot = adot)
@@ -138,9 +91,9 @@ config = { 'mode'                         : 'steady',
              'beta'                : 4,
              'init_beta_from_U_ob' : False,
              'boundaries'          : 'user_defined',
-             'u_lat_boundary' : UExpression(),
-             'v_lat_boundary' : VExpression(),
-             'w_lat_boundary' : WExpression(),
+             'u_lat_boundary' : u,
+             'v_lat_boundary' : v,
+             'w_lat_boundary' : w,
              'r'                   : 1.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',

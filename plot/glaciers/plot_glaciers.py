@@ -38,6 +38,7 @@ x_out = []
 y_out = []
 
 # The names, and (lon, lat) coordinates of the outlet glaciers, which we'll save
+# to a file
 names_out = []
 lon_out = []
 lat_out = []
