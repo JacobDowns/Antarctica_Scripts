@@ -1,5 +1,5 @@
 """
-Create contours for the shelves so we can plot them. 
+Create contours for the Antarctic ice shelves so we can plot them. 
 """
 
 from pylab import *
@@ -20,15 +20,14 @@ mg.eliminate_intersections(dist=40)
 # Get the longest contour, which will be the coastline 
 #cont = mg.longest_cont
 
-# Get the biggest contours
+# Get the two longest contours, which I'm assuming are the two major ice shelves
 cl = mg.c.allsegs[0]
-bigest_contours = array(map(len, cl))
-bigest_contours.argsort()
-print(bigest_contours.sort())
+contour_lens = array(map(len, cl))
+sorted_indexes = contour_lens.argsort()
 
-print(bigest_contours,bigest_contours.min(),bigest_contours.max())
+shelf1 = cl[sorted_indexes[-1]]
+shelf2 = cl[sorted_indexes[-2]]
 
-print(len(cl[bigest_contours[0]]))
-print(len(cl[bigest_contours[1]]))
-#plot(cont[:,0], cont[:,1])
-#show()
+# Save the ice shelves
+savetxt('shelf1_cont.out', shelf1)
+savetxt('shelf2_cont.out', shelf2)
