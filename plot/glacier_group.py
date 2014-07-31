@@ -6,12 +6,14 @@ from varglas.utilities            import DataInput
 from fenics                       import *
 
 # Get the Antarctica data sets
-bedmap2 = DataFactory.get_bedmap2()
-db2 = DataInput(bedmap2)
+#bedmap2 = DataFactory.get_bedmap2()
+#db2 = DataInput(bedmap2)
 
-# Load the domain coordinates
-domain_coords = loadtxt('data/new_domain.out')
-domain_lons, domain_lats = db2.p(domain_coords[:,0], domain_coords[:,1], inverse = True)
+# Load the outlet glacier data
+outlet_data = loadtxt('data/outlet_glaciers.out', delimiter = '|', dtype = 'str')
+glacier_names = array(outlet_data[:,0], dtype = 'str')
+glacier_lons = array(outlet_data[:,1], dtype = 'f')
+glacier_lats = array(outlet_data[:,2], dtype = 'f')
 
 # Setup the basemap projection
 proj   = 'stere'
@@ -25,15 +27,12 @@ height = 3333500*2
 m = Basemap(width=width, height=height, resolution='h',
             projection="stere", lat_ts=lat_ts, lon_0=lon_0, lat_0=lat_0)
 
-# Convert the domain (lon, lat) coordinates to basemap coordinates
-domain_xs, domain_ys = m(domain_lons, domain_lats)
-# Close the rectangle
-domain_xs = append(domain_xs, domain_xs[0])
-domain_ys = append(domain_ys, domain_ys[0])
+# Convert the glacier (lon, lat) coordinates to basemap coordinates
+glacier_xs, glacier_ys = m(glacier_lons, glacier_lats)
 
 m.drawcoastlines(linewidth=0.25, color = 'black') 
-# Plot the domain
-m.plot(domain_xs, domain_ys, 'ro-', ms = 4)
+# Plot the glaciers
+m.plot(glacier_xs, glacier_ys, 'ro', ms = 3)
 
 # Plot ice mask contour
 cont_data = loadtxt('data/cont_basemap.out')

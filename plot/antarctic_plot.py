@@ -34,7 +34,7 @@ class AntarcticaPlot :
       self.v = u.compute_vertex_values(mesh)
 
       # Replace any values below a minimum threshold
-      self.v[self.v < -1900] = -2000
+      self.v[self.v < -2050] = -2050
       
       # x and y coordinates of mesh vertices
       vxs = coords[:,0]
@@ -70,15 +70,9 @@ class AntarcticaPlot :
          
         # Draw coastlines
         self.m.drawcoastlines(linewidth=0.25, color = 'black')
-        
-        # Draw parallels and meridians
-        meridians = [0,90,-90,180]        # resolution = 'f']
-        parallels = [-70,-80]
-        self.m.drawmeridians(meridians, color='black',linewidth=.5,latmax = 90, labels = [True,True,False,True])
-        self.m.drawparallels(parallels, color='black',linewidth=.5, labels=[True, True, True, True])
-        #self.m.drawmeridians(meridians, color='black',linewidth=.5,
-        #labels=[False, False, False, True])
-        
+
+        self.plot_meridians()        
+        self.plot_shelves()
         self.plot_data()
         savefig('bed.png',dpi=250)
         #show()
@@ -113,12 +107,28 @@ class AntarcticaPlot :
         
         # Color bar label
         #cbar.set_label('Elevation (m from sea level)')
+    
+    def plot_meridians(self) :
+      # Draw parallels and meridians
+      meridians = [0,90,-90,180]        # resolution = 'f']
+      parallels = [-70,-80]
+      self.m.drawmeridians(meridians, color='black',linewidth=.5,latmax = 90, labels = [True,True,False,True])
+      self.m.drawparallels(parallels, color='black',linewidth=.5, labels=[True, True, True, True])
+    
+    # Plots a countour indicating where ice shelves are
+    def plot_shelves(self) :
+      # Load the contour data
+      cont_data = loadtxt('data/cont_basemap.out')
+      cont_xs = cont_data[:,0]
+      cont_ys = cont_data[:,1]
+      
+      plt.plot(cont_xs, cont_ys, 'k--', linewidth = 0.2, dashes = (1,1))
 
 # Load the bedrock data
-mesh = Mesh('meshes/mesh_5km.xml')
+mesh = Mesh('meshes/mesh_3km.xml')
 Q = FunctionSpace(mesh,'CG',1)
 bed = Function(Q)
-File('data/bed_5km.xml') >> bed
+File('data/bed_3km.xml') >> bed
 
 ap = AntarcticaPlot(bed)
 ap.plot()

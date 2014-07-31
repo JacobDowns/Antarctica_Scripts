@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jul 25 10:26:42 2014
-
-@author: jake
+Create a uniform mesh of Antarctica for plotting. 
 """
 
 from varglas.utilities         import DataInput, MeshGenerator
@@ -25,7 +23,7 @@ m.write_gmsh_contour(1000, boundary_extend=False)
 m.add_edge_attractor(1)
 
 #field, ifield, lcMin, lcMax, distMin, distMax
-m.add_threshold(2, 1, 1000, 1000, 1, 100000)
+m.add_threshold(2, 1, 3000, 3000, 1, 100000)
 m.finish(4)
 
 #m.create_2D_mesh('mesh') #FIXME: fails

@@ -38,9 +38,9 @@ mesh_model.set_geometry(S, B, deform=True)
 u = Function(mesh_model.Q)
 v = Function(mesh_model.Q)
 w = Function(mesh_model.Q)
-File("evan_velocity/u.xml") >> u
-File("evan_velocity/v.xml") >> v
-File("evan_velocity/w.xml") >> w
+File("evan_data/u.xml") >> u
+File("evan_data/v.xml") >> v
+File("evan_data/w.xml") >> w
 
 # "Convert" the full continent velocity expressions to expressions
 class UExpression(Expression):
@@ -67,3 +67,22 @@ w_out = project(WExpression(), model.Q)
 File('boundary_velocity/u_bound.xml') << u_out
 File('boundary_velocity/v_bound.xml') << v_out
 File('boundary_velocity/w_bound.xml') << w_out
+
+
+# Project beta2 onto my mesh
+beta2 = Function(mesh_model.Q)
+File("evan_data/beta2.xml") << beta2
+plot(beta2, interactive = True)
+# I think I actually want beta, not beta2?
+#beta = project(sqrt(beta2),mesh_model.Q)
+
+# "Convert" beta2 field to an expression
+class BetaExpression(Expression):
+  def eval(self, values, x):
+    print(beta2)
+    values[0] = beta2(x)
+    
+# Now project beta on my mesh and write it out
+beta_out = project(BetaExpression(), model.Q)
+File('projected_data/beta.xml') << beta_out
+File('projected_data/beta.pvd') << beta_out
