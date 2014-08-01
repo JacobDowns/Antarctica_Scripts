@@ -34,7 +34,13 @@ class AntarcticaPlot :
       self.v = u.compute_vertex_values(mesh)
 
       # Replace any values below a minimum threshold
-      self.v[self.v < -2050] = -2050
+      r = self.v.max() - self.v.min()
+      print("r",r)
+      print(self.v.min(), self.v.max())
+      self.v[self.v < self.v.min() + 487] = self.v.min() + 487
+      self.v[self.v > self.v.max() - 300] = self.v.max() - 300
+      
+      print(self.v.max() - self.v.min())
       
       # x and y coordinates of mesh vertices
       vxs = coords[:,0]
@@ -74,8 +80,8 @@ class AntarcticaPlot :
         self.plot_meridians()        
         self.plot_shelves()
         self.plot_data()
-        savefig('bed.png',dpi=250)
-        #show()
+        savefig('bed.png',dpi = 300)
+        show()
     
     # Plots the data
     def plot_data(self) :
@@ -112,17 +118,18 @@ class AntarcticaPlot :
       # Draw parallels and meridians
       meridians = [0,90,-90,180]        # resolution = 'f']
       parallels = [-70,-80]
-      self.m.drawmeridians(meridians, color='black',linewidth=.5,latmax = 90, labels = [True,True,False,True])
-      self.m.drawparallels(parallels, color='black',linewidth=.5, labels=[True, True, True, True])
+      self.m.drawmeridians(meridians, color='black', linewidth=.5, latmax = 90, labels = [True,True,False,True])
+      self.m.drawparallels(parallels, color='black', linewidth=.5, labels = [True, True, True, True])
     
     # Plots a countour indicating where ice shelves are
     def plot_shelves(self) :
+      print ("Plotting shelves")
       # Load the contour data
-      cont_data = loadtxt('data/cont_basemap.out')
-      cont_xs = cont_data[:,0]
-      cont_ys = cont_data[:,1]
+      shelf1 = loadtxt('data/ronne_filchner_basemap.out')
+      shelf2 = loadtxt('data/ross_basemap.out')
       
-      plt.plot(cont_xs, cont_ys, 'k--', linewidth = 0.2, dashes = (1,1))
+      plt.plot(shelf1[:,0], shelf1[:,1], 'k', linewidth = 0.25)
+      plt.plot(shelf2[:,0], shelf2[:,1], 'k', linewidth = 0.25)
 
 # Load the bedrock data
 mesh = Mesh('meshes/mesh_3km.xml')
