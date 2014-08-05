@@ -51,8 +51,8 @@ File("data/projected_data/u_bound.xml") >> u
 File("data/projected_data/v_bound.xml") >> v
 File("data/projected_data/w_bound.xml") >> w
 # Also load Evan's beta field
-beta = Function(model.Q)
-File("data/projected_data/beta.xml") >> beta
+#beta = Function(model.Q)
+#File("data/projected_data/beta.xml") >> beta
 
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(adot = adot)
@@ -91,7 +91,7 @@ config = { 'mode'                         : 'steady',
              'use_T0'              : True,
              'T0'                  : 263,
              'A0'                  : 1e-16,
-             'beta'                : beta,
+             'beta'                : 50,
              'init_beta_from_U_ob' : False,
              'boundaries'          : 'user_defined',
              'u_lat_boundary' : u,

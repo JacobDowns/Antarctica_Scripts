@@ -31,7 +31,6 @@ def cpt2seg(file_name, sym=False, discrete=False):
     dic = {}
     f = open(file_name, 'r')
     rgb = loadtxt(f)
-    print rgb 
     
     rgb = rgb/255.
     s = shape(rgb)
@@ -67,6 +66,8 @@ def cpt2seg(file_name, sym=False, discrete=False):
     return dic
 
 cm = cpt2seg('wiki.cpt', discrete = True)
+
+print(cm)
 # Save the color map dictionary
 pickle.dump( cm, open( "wiki.p", "wb" ) )
 

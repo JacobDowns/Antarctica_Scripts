@@ -49,7 +49,7 @@ for i in range(len(x)) :
   # oh well
   min_dist = array(map(lambda x : linalg.norm(v - x), cont)).min()
   
-  if min_dist < 2500 :
+  if min_dist < 2700 :
     x_out.append(x[i])
     y_out.append(y[i])
     
@@ -64,5 +64,6 @@ outlet_data = array(zip(names_out, lon_out, lat_out))
 savetxt('outlet_glaciers.out', outlet_data, delimiter = '|',  fmt="%s")
 
 # Plot the outlet glaciers
+plot(x, y, 'ko', ms = 3)
 plot(x_out,y_out,'ro',ms = 5)
 show()

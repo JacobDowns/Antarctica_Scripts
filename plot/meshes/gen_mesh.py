@@ -16,7 +16,7 @@ dbm.set_data_val("H", 32767, thklim)
 
 m = MeshGenerator(dbm, 'mesh', '')
 
-m.create_contour('H', 200.0, 5)
+m.create_contour('H', 0.0, 5)
 m.eliminate_intersections(dist=20)
 
 m.write_gmsh_contour(1000, boundary_extend=False)

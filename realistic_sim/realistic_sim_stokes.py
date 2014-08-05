@@ -10,11 +10,11 @@ from fenics                       import *
 import varglas.model              as model
 
 # Output directory
-out_dir = 'results_stokes/'
+out_dir = 'results_bp/'
 
 set_log_active(True)
-#parameters["allow_extrapolation"] = True
 
+# Load my mesh
 mesh = Mesh('data/meshes/ant_mesh.xml')
 
 # Get a bunch of data to use in the simulation 
@@ -27,7 +27,7 @@ dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
 db2 = DataInput(bedmap2,  mesh=mesh)
 
-# Fix some stuff?
+# This code is 
 db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
 db2.data['S'] = db2.data['B'] + db2.data['H']
@@ -47,9 +47,12 @@ model.set_geometry(S, B, deform=True)
 u = Function(model.Q)
 v = Function(model.Q)
 w = Function(model.Q)
-File("data/boundary_velocity/u_bound.xml") >> u
-File("data/boundary_velocity/v_bound.xml") >> v
-File("data/boundary_velocity/w_bound.xml") >> w
+File("data/projected_data/u_bound.xml") >> u
+File("data/projected_data/v_bound.xml") >> v
+File("data/projected_data/w_bound.xml") >> w
+# Also load Evan's beta field
+beta = Function(model.Q)
+File("data/projected_data/beta.xml") >> beta
 
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(adot = adot)
@@ -88,13 +91,13 @@ config = { 'mode'                         : 'steady',
              'use_T0'              : True,
              'T0'                  : 263,
              'A0'                  : 1e-16,
-             'beta'                : 4,
+             'beta'                : 2,
              'init_beta_from_U_ob' : False,
              'boundaries'          : 'user_defined',
              'u_lat_boundary' : u,
              'v_lat_boundary' : v,
              'w_lat_boundary' : w,
-             'r'                   : 1.0,
+             'r'                   : 0.0,
              'E'                   : 1.0,
              'approximation'       : 'stokes',
              'log'                 : True
@@ -144,3 +147,4 @@ config = { 'mode'                         : 'steady',
 
 F = solvers.SteadySolver(model, config)
 F.solve()
+

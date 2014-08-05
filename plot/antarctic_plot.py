@@ -15,7 +15,6 @@ from fenics import *
 from matplotlib import colors
 import custom_cmaps
 
-# Use Latex labels
 rc('font',**{'size'   : 22})
 #rc('text', usetex=True)
 
@@ -32,15 +31,13 @@ class AntarcticaPlot :
       # array the same length as u.vector()
       self.v = numpy.zeros(len(u.vector().array()),dtype='d')
       self.v = u.compute_vertex_values(mesh)
-
-      # Replace any values below a minimum threshold
-      r = self.v.max() - self.v.min()
-      print("r",r)
-      print(self.v.min(), self.v.max())
-      self.v[self.v < self.v.min() + 487] = self.v.min() + 487
-      self.v[self.v > self.v.max() - 300] = self.v.max() - 300
       
-      print(self.v.max() - self.v.min())
+      print(self.v.min(), self.v.max())
+
+      # Replace any values outside of the range of the color map, assuming each 
+      # color spans 200 meters
+      self.v[self.v < -5000] = -5000
+      self.v[self.v > 3600] = 3600
       
       # x and y coordinates of mesh vertices
       vxs = coords[:,0]
@@ -56,7 +53,7 @@ class AntarcticaPlot :
     
     # Draw the outline of Greenland and the meridians
     def plot(self) :
-        print("Plot")
+        print("Plotting...")
         self.fig = plt.figure(figsize=(24,27))
         self.ax = self.fig.add_axes()
         
@@ -80,8 +77,8 @@ class AntarcticaPlot :
         self.plot_meridians()        
         self.plot_shelves()
         self.plot_data()
-        savefig('bed.png',dpi = 300)
-        show()
+        savefig('bed1.png',dpi = 350)
+        #show()
     
     # Plots the data
     def plot_data(self) :
@@ -89,30 +86,28 @@ class AntarcticaPlot :
         # map coordinates
         x, y = self.m(self.v_lons,self.v_lats)     
         
+        # Upper and lower range of the data
         vmin = self.v.min()
         vmax = self.v.max()
-        
-        print("vmin",self.v.min())
-        print("vmax",self.v.max())
         
         # Make sure the color map has the correct range
         norm = colors.Normalize(vmin=vmin, vmax=vmax)
         # Plot the data      
-        self.cs = tripcolor(x,y,self.tri_cells,self.v,norm=norm,shading='gouraud',cmap = custom_cmaps.cmap_wiki)
-        #mesh_handle = triplot(x, y, self.tri_cells, '-', lw=0.2, alpha=0.8) 
+        self.cs = tripcolor(x,y,self.tri_cells,self.v,norm=norm,shading='gouraud',cmap = custom_cmaps.cmap_bed)
         
-        position= self.fig.add_axes([.77,.7,0.018,0.13])
+        position= self.fig.add_axes([.77,.68,0.018,0.13])
         cbar = self.fig.colorbar(self.cs,position)
         
+        plt.tick_params(labelsize = 13)
         # Define the tick marks and tick labels
-        #ticks = [-1000,-500,0,500,1000,1500,2000,2700]
-        #tick_labels = map(str,ticks)
+        ticks = [-2000,-1000,0,1000,2000,3000,3800]
+        tick_labels = map(str,ticks)
         #tick_labels[0] = r'$\leq$ -1000'
-        #cbar.set_ticks(ticks)
-        #cbar.set_ticklabels(tick_labels)
+        cbar.set_ticks(ticks)
+        cbar.set_ticklabels(tick_labels)
         
         # Color bar label
-        #cbar.set_label('Elevation (m from sea level)')
+        cbar.set_label('Elevation (m from sea level)')
     
     def plot_meridians(self) :
       # Draw parallels and meridians
@@ -123,19 +118,19 @@ class AntarcticaPlot :
     
     # Plots a countour indicating where ice shelves are
     def plot_shelves(self) :
-      print ("Plotting shelves")
+      print "Plotting shelves..."
       # Load the contour data
       shelf1 = loadtxt('data/ronne_filchner_basemap.out')
       shelf2 = loadtxt('data/ross_basemap.out')
       
-      plt.plot(shelf1[:,0], shelf1[:,1], 'k', linewidth = 0.25)
-      plt.plot(shelf2[:,0], shelf2[:,1], 'k', linewidth = 0.25)
+      plt.plot(shelf1[:,0], shelf1[:,1], 'k--', linewidth = 0.25, dashes = (1,1))
+      plt.plot(shelf2[:,0], shelf2[:,1], 'k--', linewidth = 0.25, dashes = (1,1))
 
 # Load the bedrock data
-mesh = Mesh('meshes/mesh_3km.xml')
+mesh = Mesh('meshes/bed_mesh_5km.xml')
 Q = FunctionSpace(mesh,'CG',1)
 bed = Function(Q)
-File('data/bed_3km.xml') >> bed
+File('data/bed_5km.xml') >> bed
 
 ap = AntarcticaPlot(bed)
 ap.plot()

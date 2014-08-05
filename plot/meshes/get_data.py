@@ -9,7 +9,7 @@ from varglas.utilities            import DataInput
 from fenics import *
 
 # Load a mesh
-mesh = Mesh('mesh_3km.xml')
+mesh = Mesh('bed_mesh_5km.xml')
 #plot(mesh, interactive = True)
 
 # create meshgrid for contour :
@@ -23,4 +23,5 @@ Q = FunctionSpace(mesh,'CG',1)
 
 bed = project(bed,Q)
 
-File('../data/bed_3km.xml') << bed
+File('../data/bed_5km.xml') << bed
+File('../data/bed_5km.pvd') << bed
