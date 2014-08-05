@@ -1,5 +1,5 @@
-""" This script projects Evan's velocity data onto my mesh so that it can be used
-as a boundary condition for my realistic Antarctica simulation. """
+""" This script projects Evan's data onto my mesh so that it can be used
+in my realistic Antarctica simulation. """
 
 from varglas.data.data_factory    import DataFactory
 from varglas.mesh.mesh_factory    import MeshFactory
@@ -19,7 +19,7 @@ thklim = 100.0
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 db2 = DataInput(bedmap2, mesh = mesh)
 
-# I'm just doing this so it matches Evan's stuff
+# Deform the mesh so it matches Evan's
 db2.data['B'] = db2.data['S'] - db2.data['H']
 db2.set_data_val('H', 32767, thklim)
 db2.data['S'] = db2.data['B'] + db2.data['H']
@@ -55,7 +55,7 @@ class WExpression(Expression):
   def eval(self, values, x):
     values[0] = w(x)
 
-# Setup another model for the purpose of deforming my mes
+# Setup another model for the purpose of deforming my mesh
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B, deform=True)
@@ -68,19 +68,15 @@ File('boundary_velocity/u_bound.xml') << u_out
 File('boundary_velocity/v_bound.xml') << v_out
 File('boundary_velocity/w_bound.xml') << w_out
 
+# Project beta onto my mesh
+beta = Function(mesh_model.Q)
+File("evan_data/beta.xml") >> beta
+plot(beta, interactive = True)
 
-# Project beta2 onto my mesh
-beta2 = Function(mesh_model.Q)
-File("evan_data/beta2.xml") << beta2
-plot(beta2, interactive = True)
-# I think I actually want beta, not beta2?
-#beta = project(sqrt(beta2),mesh_model.Q)
-
-# "Convert" beta2 field to an expression
+# "Convert" beta field to an expression
 class BetaExpression(Expression):
   def eval(self, values, x):
-    print(beta2)
-    values[0] = beta2(x)
+    values[0] = beta(x)
     
 # Now project beta on my mesh and write it out
 beta_out = project(BetaExpression(), model.Q)

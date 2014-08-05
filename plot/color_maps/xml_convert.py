@@ -73,9 +73,9 @@ def parseXmlMap(fileName,log_scale = False) :
   colorDict = {'red' : redTuple,'green' : greenTuple,'blue' : blueTuple}
   return colorDict
 
-cm = parseXmlMap("antarctica_bed.xml")
+cm = parseXmlMap("antarctica_bed1.xml")
 print cm
 # Save the color map dictionary
-pickle.dump( cm, open( "antarctica.p", "wb" ) )
+pickle.dump( cm, open( "antarctica1.p", "wb" ) )
     
 

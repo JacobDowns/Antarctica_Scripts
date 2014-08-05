@@ -91,7 +91,7 @@ config = { 'mode'                         : 'steady',
              'use_T0'              : True,
              'T0'                  : 263,
              'A0'                  : 1e-16,
-             'beta'                : 2,
+             'beta'                : beta,
              'init_beta_from_U_ob' : False,
              'boundaries'          : 'user_defined',
              'u_lat_boundary' : u,
@@ -147,4 +147,7 @@ config = { 'mode'                         : 'steady',
 
 F = solvers.SteadySolver(model, config)
 F.solve()
+
+# Writ beta out to a file
+File(out_dir + 'beta.pvd') << model.beta 
 

@@ -14,3 +14,7 @@ cmap_wiki = LinearSegmentedColormap('wiki', d_wiki)
 # Create an Antarctica bed color map
 d_bed = pickle.load( open( "color_maps/antarctica.p", "rb" ) )
 cmap_bed = LinearSegmentedColormap('bed', d_bed)
+
+# Alternate version
+d_bed1 = pickle.load( open( "color_maps/antarctica1.p", "rb" ) )
+cmap_bed1 = LinearSegmentedColormap('bed1', d_bed1)
