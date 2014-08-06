@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Plot of Antarctica bed data.
 """
@@ -11,9 +12,9 @@ from varglas.utilities import DataInput
 from fenics import *
 from matplotlib import colors
 import custom_cmaps
+from pyproj import Proj
 
 rc('font',**{'size'   : 22})
-#rc('text', usetex=True)
 
 class AntarcticaPlot :
     
@@ -40,18 +41,29 @@ class AntarcticaPlot :
     vxs = coords[:,0]
     vys = coords[:,1]
     
-    # Create a data input object from the bedmap 2 data so that we can get its
-    # projection object
-    bedmap2 = DataFactory.get_bedmap2()
-    dbm = DataInput(bedmap2)
+    # Create a projection object
+    proj   = 'stere'
+    lat_0  = '-90'
+    lat_ts = '-71'
+    lon_0  = '0'
+        
+    # Setup a projection object
+    proj =   " +proj=" + proj \
+               + " +lat_0="  + lat_0 \
+               + " +lat_ts=" + lat_ts \
+               + " +lon_0="  + lon_0 \
+               + " +k=1 +x_0=0 +y_0=0 +no_defs +a=6378137 +rf=298.257223563" \
+               + " +towgs84=0.000,0.000,0.000 +to_meter=1"
+               
+    self.p = Proj(proj)
     
     # Get lon,lat coordinates of the mesh vertices
-    self.v_lons,self.v_lats = dbm.p(vxs,vys,inverse=True)
+    self.v_lons,self.v_lats = self.p(vxs, vys,inverse=True)
   
   # Draw the outline of Greenland and the meridians
   def plot(self) :
     print("Plotting...")
-    self.fig = plt.figure(figsize=(24,27))
+    self.fig = plt.figure(figsize=(32,36))
     self.ax = self.fig.add_axes()
     
     plt.title("Antarctica Bedrock Elevation", {'fontsize':52}, y = 1.04)
@@ -76,8 +88,14 @@ class AntarcticaPlot :
     self.plot_meridians()        
     self.plot_grounding_line()
     self.plot_continent()
+    
+    # Plot glacier labels
+    group1 = self.load_glaciers('data/groups/group1.out')
+    self.plot_group(group1, .95e6, 5.5e6, .4e5, mo = .4e5,xo = .4e5, direction = -1)
+    
     self.plot_data()
-    savefig('bed1.png',dpi = 350)
+
+    savefig('bed1.png',dpi = 300)
     #show()
   
   # Plots the data
@@ -133,18 +151,68 @@ class AntarcticaPlot :
     print "Plotting grounding line..."
     cont = loadtxt('data/grounding_basemap.out')
     
-    color = '#0040C9'
-    plt.plot(cont[:,0], cont[:,1], color = 'w', linewidth = 1)
-    plt.plot(cont[:,0], cont[:,1], 'b.', linewidth = 0.5)
+    #color = '#0040C9'
+    plt.plot(cont[:,0], cont[:,1], 'k', linewidth = .8)
+    plt.plot(cont[:,0], cont[:,1], color = '#75BFFF', linewidth = .5)
     
   # Plots the full continent contour generated from the bedmap2 data
   def plot_continent(self) :
     print "Plotting continent..."
     cont = loadtxt('data/continent_basemap.out')
     
-    plt.plot(cont[:,0], cont[:,1], color = 'w', linewidth = 1.0)
-    plt.plot(cont[:,0], cont[:,1], color = 'k', linewidth = 0.5)
+    plt.plot(cont[:,0], cont[:,1], color = 'w', linewidth = .95)
+    plt.plot(cont[:,0], cont[:,1], 'k', linewidth = .55)
+  
+  # Draw a label pointing to a specific point
+  # (lx, ly) : label x and y
+  # (tx, ty) : target x and y
+  # mo : How far to the right or left the midpoint is from the label
+  # text : label text
+  def add_line_label(self, lx, ly, tx, ty, text, mo = 1e6, direction = 1, font_size = 13) :
+    # Find the (x,y) coordinates of the midpoint
+    mx = lx + direction*mo
+    my = ly
+    
+    # Define the line properties of the label
+    props = dict(arrowstyle='-',linewidth=.5)
+    
+    # The annotate command doesn't draw the line all the way to the midpoint so 
+    # I have to nudge it in the right direction a bit
+    nudge = 6500
+    
+    # Draw label and a line to the midpoint
+    plt.annotate(text, xy=(mx + direction*nudge,my), xytext=(lx,ly),size = font_size, 
+                 arrowprops = props
+            )
+    
+    #plt.plt([lx,tx,mx],[lx,tx,mx])
+    # Draw another line from the midpoint to the glacier itself
+    plt.plot([mx, tx], [my, ty], 'k-', lw = .5)
+  
+  # Plot a group of glacier labels 
+  def plot_group(self, group, sx, sy, yo, mo = 1e6, direction = 1, xo = 0) :
+    for i in range(len(group[0])) :
+      name = group[0][i]
+      tx = group[1][i]
+      ty = group[2][i]
+      
+      lx = sx + i*xo
+      ly = sy - i*yo
+      
+      self.add_line_label(lx, ly, tx, ty, name, mo = mo, direction = direction)
 
+  def load_glaciers(self, file_name) :
+    # Load some glacier data
+    glacier_data = loadtxt(file_name, delimiter = '|', dtype = 'str')
+    glacier_names = array(glacier_data[:,0], dtype = 'str')
+    glacier_lons = array(glacier_data[:,1], dtype = 'f')
+    glacier_lats = array(glacier_data[:,2], dtype = 'f')    
+    
+    # Convert to basemap coordinates
+    glacier_xs, glacier_ys = self.m(glacier_lons, glacier_lats)
+    
+    return (glacier_names, glacier_xs, glacier_ys)
+    
 # Load the bedrock data
 mesh = Mesh('meshes/bed_mesh_5km.xml')
 Q = FunctionSpace(mesh,'CG',1)

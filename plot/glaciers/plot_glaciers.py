@@ -49,7 +49,7 @@ for i in range(len(x)) :
   # oh well
   min_dist = array(map(lambda x : linalg.norm(v - x), cont)).min()
   
-  if min_dist < 2700 :
+  if min_dist < 2800 :
     x_out.append(x[i])
     y_out.append(y[i])
     
