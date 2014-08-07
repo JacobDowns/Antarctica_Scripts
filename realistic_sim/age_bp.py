@@ -10,7 +10,7 @@ from fenics                       import *
 import varglas.model              as model
 
 # Output directory
-out_dir = 'results_bp/'
+out_dir = 'age_bp/'
 
 set_log_active(True)
 
@@ -19,11 +19,9 @@ mesh = Mesh('data/meshes/ant_mesh.xml')
 
 # Get a bunch of data to use in the simulation 
 thklim = 100.0
-measures  = DataFactory.get_ant_measures(res=900)
 bedmap1   = DataFactory.get_bedmap1(thklim=thklim)
 bedmap2   = DataFactory.get_bedmap2(thklim=thklim)
 
-dm  = DataInput(measures, mesh=mesh)
 db1 = DataInput(bedmap1,  mesh=mesh)
 db2 = DataInput(bedmap2,  mesh=mesh)
 
@@ -34,69 +32,59 @@ db2.data['S'] = db2.data['B'] + db2.data['H']
 
 S      = db2.get_spline_expression("S")
 B      = db2.get_spline_expression("B")
-T_s    = db1.get_spline_expression("srfTemp")
-q_geo  = db1.get_spline_expression("q_geo")
 adot   = db1.get_spline_expression("adot")
 
 # Setup the model
 model = model.Model()
 model.set_mesh(mesh)
 model.set_geometry(S, B, deform=True)
-
-# Load the velocities for the boundaries
-u = Function(model.Q)
-v = Function(model.Q)
-w = Function(model.Q)
-File("data/projected_data/u_bound.xml") >> u
-File("data/projected_data/v_bound.xml") >> v
-File("data/projected_data/w_bound.xml") >> w
-# Also load Evan's beta field
-beta = Function(model.Q)
-File("data/projected_data/beta.xml") >> beta
-
 model.set_parameters(pc.IceParameters())
 model.calculate_boundaries(adot = adot)
 model.initialize_variables()
 
-# Specifify non-linear solver parameters :
-nonlin_solver_params = default_nonlin_solver_params()
-nonlin_solver_params['newton_solver']['relaxation_parameter']    = 0.7
-nonlin_solver_params['newton_solver']['relative_tolerance']      = 1e-3
-nonlin_solver_params['newton_solver']['maximum_iterations']      = 15
-nonlin_solver_params['newton_solver']['error_on_nonconvergence'] = False
-nonlin_solver_params['newton_solver']['linear_solver']           = 'mumps'
-nonlin_solver_params['newton_solver']['preconditioner']          = 'default'
-parameters['form_compiler']['quadrature_degree']                 = 2
+# Load the bp velocity fields
+u = Function(model.Q)
+v = Function(model.Q)
+w = Function(model.Q)
+File('results_bp/u.xml') >> u
+File('results_bp/v.xml') >> v
+File('results_bp/w.xml') >> w
+model.u = u
+model.v = v
+model.w = w
 
-config = { 'mode'                         : 'steady',
-           't_start'                      : None,
-           't_end'                        : None,
-           'time_step'                    : None,
+# Load the initial age
+age = Function(model.Q)
+File("data/projected_data/age.xml") >> age
+# Set the starting age of the model
+model.A = age
+
+config = { 'mode'                         : 'transient',
+           't_start'                      : 0,
+           't_end'                        : 1000,
+           'time_step'                    : 10,
            'output_path'                  : out_dir,
            'wall_markers'                 : [],
            'periodic_boundary_conditions' : False,
-           'log'                          : True,
+           'log'                          : False,
            'coupled' : 
            { 
-             'on'                  : True,
+             'on'                  : False,
              'inner_tol'           : 0.0,
              'max_iter'            : 1
            },
            'velocity' : 
            { 
-             'on'                  : True,
-             'newton_params'       : nonlin_solver_params,
+             'on'                  : False,
+             'newton_params'       : None,
              'viscosity_mode'      : 'full',
              'b_linear'            : None,
              'use_T0'              : True,
              'T0'                  : 263,
              'A0'                  : 1e-16,
-             'beta'                : beta,
+             'beta'                : None,
              'init_beta_from_U_ob' : False,
-             'boundaries'          : 'user_defined',
-             'u_lat_boundary' : u,
-             'v_lat_boundary' : v,
-             'w_lat_boundary' : w,
+             'boundaries'          : None,
              'r'                   : 0.0,
              'E'                   : 1.0,
              'approximation'       : 'fo',
@@ -104,10 +92,10 @@ config = { 'mode'                         : 'steady',
            },
            'enthalpy' : 
            { 
-             'on'                  : True,
+             'on'                  : False,
              'use_surface_climate' : False,
-             'T_surface'           : T_s,
-             'q_geo'               : q_geo,
+             'T_surface'           : None,
+             'q_geo'               : None,
              'lateral_boundaries'  : None,
              'log'                 : True
            },
@@ -121,7 +109,7 @@ config = { 'mode'                         : 'steady',
            },  
            'age' : 
            { 
-             'on'                  : False,
+             'on'                  : True,
              'use_smb_for_ela'     : True,
              'ela'                 : None,
              'log'                 : True
@@ -144,15 +132,7 @@ config = { 'mode'                         : 'steady',
              'animate'             : False
            }}
 
-F = solvers.SteadySolver(model, config)
-F.solve()
-
-plot(model.u, interactive = True)
-# Save velocity
-
-print(type(model.u))
-File(out_dir + 'u.xml') << project(model.u, model.Q)
-File(out_dir + 'v.xml') << project(model.v, model.Q)
-File(out_dir + 'w.xml') << project(model.w, model.Q)
+T = solvers.TransientSolver(model, config)
+T.solve()
 
 

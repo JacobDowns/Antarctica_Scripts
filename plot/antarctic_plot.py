@@ -29,8 +29,6 @@ class AntarcticaPlot :
     # array the same length as u.vector()
     self.v = numpy.zeros(len(u.vector().array()),dtype='d')
     self.v = u.compute_vertex_values(mesh)
-    
-    print(self.v.min(), self.v.max())
 
     # Replace any values outside of the range of the color map, assuming each 
     # color spans 200 meters
@@ -90,8 +88,26 @@ class AntarcticaPlot :
     self.plot_continent()
     
     # Plot glacier labels
-    group1 = self.load_glaciers('data/groups/group1.out')
-    self.plot_group(group1, .95e6, 5.5e6, .4e5, mo = .4e5,xo = .4e5, direction = -1)
+    """group1 = self.load_glaciers('data/groups/group1.out')
+    self.plot_group(group1, 1.1e6, 5.25e6, .42e5, mox = -.4e5,xo = .4e5)
+    
+    group2 = self.load_glaciers('data/groups/group2.out')
+    self.plot_group(group2, 100000, 4.9e6, .45e5, mox = 4.5e5,xo=.19e5)
+    
+    group5 = self.load_glaciers('data/groups/group5.out')
+    self.plot_group(group5, 1e6, 3.1e6, .45e5, mox = 4.5e5)
+    
+    group6 = self.load_glaciers('data/groups/group6.out')
+    self.plot_group(group6, 1e6, 3.8e6, .45e5, mox = 4.5e5)
+    
+    group3 = self.load_glaciers('data/groups/group3.out')
+    self.plot_group(group3, 1.65e6, 2e6, .45e5, mox = 5.5e5,xo = .22e5)
+    
+    group4 = self.load_glaciers('data/groups/group4.out')
+    self.plot_group(group4, 2.85e6, 2e6, .45e5, xo = .22e5, mox = 4e5)"""
+    
+    group7 = self.load_glaciers('data/groups/group7.out')
+    self.plot_group(group7, 4.3e6, 1.15e6, .45e5, mox = -.8e5)
     
     self.plot_data()
 
@@ -166,12 +182,16 @@ class AntarcticaPlot :
   # Draw a label pointing to a specific point
   # (lx, ly) : label x and y
   # (tx, ty) : target x and y
-  # mo : How far to the right or left the midpoint is from the label
+  # mox : How far to the right or left the midpoint is from the label
+  # moy : How far up or down the midpoint is from the label
   # text : label text
-  def add_line_label(self, lx, ly, tx, ty, text, mo = 1e6, direction = 1, font_size = 13) :
+  # direction : 1 for right, -1 for left
+  # font_size : self explanatory
+  # dynamic : set to true to adjust position of midpoint based on length of text
+  def add_line_label(self, lx, ly, tx, ty, text, mox = 1e6, moy = 0) :
     # Find the (x,y) coordinates of the midpoint
-    mx = lx + direction*mo
-    my = ly
+    mx = lx + mox
+    my = ly + moy
     
     # Define the line properties of the label
     props = dict(arrowstyle='-',linewidth=.5)
@@ -181,16 +201,14 @@ class AntarcticaPlot :
     nudge = 6500
     
     # Draw label and a line to the midpoint
-    plt.annotate(text, xy=(mx + direction*nudge,my), xytext=(lx,ly),size = font_size, 
-                 arrowprops = props
-            )
-    
-    #plt.plt([lx,tx,mx],[lx,tx,mx])
+    plt.annotate(unicode(text), xy=(mx + np.sign(mox)*nudge,my), xytext=(lx,ly),size = 14, 
+                 arrowprops = props, rotation = )
+
     # Draw another line from the midpoint to the glacier itself
     plt.plot([mx, tx], [my, ty], 'k-', lw = .5)
   
   # Plot a group of glacier labels 
-  def plot_group(self, group, sx, sy, yo, mo = 1e6, direction = 1, xo = 0) :
+  def plot_group(self, group, sx, sy, yo, xo = 0, mox = 1e6, moy = 0) :
     for i in range(len(group[0])) :
       name = group[0][i]
       tx = group[1][i]
@@ -199,7 +217,7 @@ class AntarcticaPlot :
       lx = sx + i*xo
       ly = sy - i*yo
       
-      self.add_line_label(lx, ly, tx, ty, name, mo = mo, direction = direction)
+      self.add_line_label(lx, ly, tx, ty, name, mox = mox, moy = moy)
 
   def load_glaciers(self, file_name) :
     # Load some glacier data

@@ -81,3 +81,15 @@ class BetaExpression(Expression):
 beta_out = project(BetaExpression(), model.Q)
 File('projected_data/beta.xml') << beta_out
 File('projected_data/beta.pvd') << beta_out
+
+# Project age onto my mesh
+age = Function(mesh_model.Q)
+File("evan_data/age.xml") >> age
+
+class AgeExpression(Expression):
+  def eval(self, values, x):
+    values[0] = age(x)
+
+age_out = project(AgeExpression(), model.Q)
+File('projected_data/age.xml') << age_out
+File('projected_data/age.pvd') << age_out
